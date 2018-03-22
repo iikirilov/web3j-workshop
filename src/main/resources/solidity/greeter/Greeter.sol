@@ -2,39 +2,37 @@ pragma solidity ^0.4.2;
 
 // Modified Greeter contract. Based on example at https://www.ethereum.org/greeter.
 
-contract mortal {
+contract Mortal {
     /* Define variable owner of the type address*/
     address owner;
 
     /* this function is executed at initialization and sets the owner of the contract */
-    function mortal() { owner = msg.sender; }
+    function Mortal() public { owner = msg.sender; }
 
     /* Function to recover the funds on the contract */
-    function kill() { if (msg.sender == owner) suicide(owner); }
+    function kill() public { if (msg.sender == owner) selfdestruct(owner); }
 }
 
-contract greeter is mortal {
-    /* define variable greeting of the type string */
-    string greeting;
+contract Greeter is Mortal {
+
+    string name;
 
     /* this runs when the contract is executed */
-    function greeter(string _greeting) public {
-        greeting = _greeting;
+    function Greeter(string _name) public {
+        name = _name;
     }
 
-    function newGreeting(string _greeting) public {
-        Modified(greeting, _greeting, greeting, _greeting);
-        greeting = _greeting;
+    /* send function */
+    function greet(address _recipient, string _message) public {
+        Greeter g = Greeter(_recipient);
+        g.receive(name, _message);
     }
 
-    /* main function */
-    function greet() constant returns (string) {
-        return greeting;
+    /* receive function */
+    function receive(string _name, string _message) external {
+        emit MessageReceived(msg.sender, _name, _message);
     }
 
-    /* we include indexed events to demonstrate the difference that can be
-    captured versus non-indexed */
-    event Modified(
-            string indexed oldGreetingIdx, string indexed newGreetingIdx,
-            string oldGreeting, string newGreeting);
+    /* example event in solidity */
+    event MessageReceived(address indexed sender, string indexed name, string message);
 }

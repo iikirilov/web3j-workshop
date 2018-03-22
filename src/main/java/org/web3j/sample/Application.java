@@ -1,21 +1,22 @@
 package org.web3j.sample;
 
-import java.math.BigDecimal;
+import java.io.UnsupportedEncodingException;
+import java.util.Scanner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
-import org.web3j.protocol.Web3j;
+import org.web3j.protocol.admin.methods.response.NewAccountIdentifier;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.geth.Geth;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.sample.contracts.generated.Greeter;
 import org.web3j.tx.Contract;
 import org.web3j.tx.ManagedTransaction;
-import org.web3j.tx.Transfer;
-import org.web3j.utils.Convert;
-import org.web3j.utils.Numeric;
 
 /**
  * A simple web3j application that demonstrates a number of core features of web3j:
@@ -46,6 +47,7 @@ import org.web3j.utils.Numeric;
 public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
+    private Scanner s = new Scanner(System.in);
 
     public static void main(String[] args) throws Exception {
         new Application().run();
@@ -55,57 +57,79 @@ public class Application {
 
         // We start by creating a new web3j instance to connect to remote nodes on the network.
         // Note: if using web3j Android, use Web3jFactory.build(...
-        Web3j web3j = Web3j.build(new HttpService(
-                "https://rinkeby.infura.io/<your token>"));  // FIXME: Enter your Infura token here;
-        log.info("Connected to Ethereum client version: "
-                + web3j.web3ClientVersion().send().getWeb3ClientVersion());
+        log.info("Enter your node url");
+        String node = s.nextLine();
+        Geth geth = Geth.build(new HttpService(node));
+        log.info("Connection to node successful");
+
+        // Let us create a new account for you
+        log.info("Lets create a new account");
+        log.info("Choose a password for your account:");
+        String password = s.nextLine();
+        log.info("Your password is {}", password);
+        NewAccountIdentifier newAccountIdentifier = geth.personalNewAccount(password).send();
+        log.info("New account {} created", newAccountIdentifier.getAccountId());
 
         // We then need to load our Ethereum wallet file
-        // FIXME: Generate a new wallet file using the web3j command line tools https://docs.web3j.io/command_line.html
+        log.info("Please enter you wallet file location");
+        String walletFileLocation = s.nextLine();
+
         Credentials credentials =
                 WalletUtils.loadCredentials(
-                        "<password>",
-                        "/path/to/<walletfile>");
-        log.info("Credentials loaded");
+                        password,
+                        walletFileLocation);
 
-        // FIXME: Request some Ether for the Rinkeby test network at https://www.rinkeby.io/#faucet
-        log.info("Sending 1 Wei ("
-                + Convert.fromWei("1", Convert.Unit.ETHER).toPlainString() + " Ether)");
-        TransactionReceipt transferReceipt = Transfer.sendFunds(
-                web3j, credentials,
-                "0x19e03255f667bdfd50a32722df860b1eeaf4d635",  // you can put any address here
-                BigDecimal.ONE, Convert.Unit.WEI)  // 1 wei = 10^-18 Ether
-                .send();
-        log.info("Transaction complete, view it at https://rinkeby.etherscan.io/tx/"
-                + transferReceipt.getTransactionHash());
-
-        // Now lets deploy a smart contract
-        log.info("Deploying smart contract");
+        // Now lets deploy a smart contract - Remeber to enter YOUR name
+        log.info("Let's deploy your smart contract");
+        log.info("What is your name?");
+        String name = s.nextLine();
+        log.info("Deploying your contract, this may take a minute");
         Greeter contract = Greeter.deploy(
-                web3j, credentials,
+                geth, credentials,
                 ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,
-                "Hello blockchain world!").send();
+                name).send();
+        log.info("Contract deployed at {}", contract.getContractAddress());
 
-        String contractAddress = contract.getContractAddress();
-        log.info("Smart contract deployed to address " + contractAddress);
-        log.info("View contract at https://rinkeby.etherscan.io/address/" + contractAddress);
 
-        log.info("Value stored in remote smart contract: " + contract.greet().send());
-
-        // Lets modify the value in our smart contract
-        TransactionReceipt transactionReceipt = contract.newGreeting("Well hello again").send();
-
-        log.info("New value stored in remote smart contract: " + contract.greet().send());
 
         // Events enable us to log specific events happening during the execution of our smart
         // contract to the blockchain. Index events cannot be logged in their entirety.
         // For Strings and arrays, the hash of values is provided, not the original value.
         // For further information, refer to https://docs.web3j.io/filters.html#filters-and-events
-        for (Greeter.ModifiedEventResponse event : contract.getModifiedEvents(transactionReceipt)) {
-            log.info("Modify event fired, previous value: " + event.oldGreeting
-                    + ", new value: " + event.newGreeting);
-            log.info("Indexed event previous value: " + Numeric.toHexString(event.oldGreetingIdx)
-                    + ", new value: " + Numeric.toHexString(event.newGreetingIdx));
-        }
+
+        // We register an observable for the event in our contract to be able to detect when someone sends us a message
+        // Observables are useful to handle streams of data asynchronously
+        // For more info, refer to http://reactivex.io/documentation/observable.html
+        DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
+        contract.messageReceivedEventObservable(dbp,dbp).subscribe(event -> {
+            // onNext() method implementation
+            // TODO - event.name needs to be decoded
+            String receivedFrom = null;
+            try {
+                receivedFrom = new String(event.name,  "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                log.error("Encoding does not exist {}", e);
+            }
+            log.info(event.message + " from " + receivedFrom);
+        }, error -> {
+            // onError() method implementation
+            log.error("Message received event observable error {}", error);
+        }, () -> {
+            // onComplete() method implementation
+            // used to clean up after the final onNext() call
+            // *as the stream of blocks does not end, this case does not have a "final" onNext() call*
+        });
+
+        // Now lets send a message to our mate
+        log.info("Enter your mates' contract address");
+        String matesContract = s.nextLine();
+        log.info("What do you want to send them?");
+        String message = s.nextLine();
+        log.info("Sending your message, it may take a while");
+        TransactionReceipt tr = contract.greet(matesContract, message).send();
+        log.info("Your message was sent in {}", tr.getTransactionHash());
+
+        // Currently you can only send one message per run -
+        // TODO: Develop so you can actually "chat" using your contract,
     }
 }

@@ -1,0 +1,6 @@
+\beamer@sectionintoc {1}{Introduction}{4}{0}{1}
+\beamer@subsectionintoc {1}{1}{Blockchain}{4}{0}{1}
+\beamer@subsectionintoc {1}{2}{Ethereum}{8}{0}{1}
+\beamer@sectionintoc {2}{Web3j}{17}{0}{2}
+\beamer@subsectionintoc {2}{1}{Basics}{17}{0}{2}
+\beamer@subsectionintoc {2}{2}{Workshop}{24}{0}{2}
