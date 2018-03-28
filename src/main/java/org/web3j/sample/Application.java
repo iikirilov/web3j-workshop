@@ -1,6 +1,7 @@
 package org.web3j.sample;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -103,14 +104,7 @@ public class Application {
         DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
         contract.messageReceivedEventObservable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
-            // TODO - event.name needs to be decoded
-            String receivedFrom = null;
-            try {
-                receivedFrom = new String(event.name,  "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                log.error("Encoding does not exist {}", e);
-            }
-            log.info(event.message + " from " + receivedFrom);
+            log.info(event.message + " from " + Arrays.toString(event.name));
         }, error -> {
             // onError() method implementation
             log.error("Message received event observable error {}", error);
