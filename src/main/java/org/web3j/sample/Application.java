@@ -91,8 +91,6 @@ public class Application {
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
 
-
-
         // Events enable us to log specific events happening during the execution of our smart
         // contract to the blockchain. Index events cannot be logged in their entirety.
         // For Strings and arrays, the hash of values is provided, not the original value.
@@ -104,7 +102,7 @@ public class Application {
         DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
         contract.messageReceivedEventObservable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
-            log.info(event.message + " from " + Arrays.toString(event.name));
+            log.info(event.message + " from " + event.name);
         }, error -> {
             // onError() method implementation
             log.error("Message received event observable error {}", error);
