@@ -88,11 +88,6 @@ public class Application {
                 ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
-        // We need to fund your contract to be able to call functions in other contracts
-        log.info("Fund your contract at: {}", contract.getContractAddress());
-        while (geth.ethGetBalance(contract.getContractAddress(), dbp).send().getBalance().equals(BigInteger.ZERO)) {
-            TimeUnit.SECONDS.sleep(3);
-        }
 
         // Events enable us to log specific events happening during the execution of our smart
         // contract to the blockchain. Index events cannot be logged in their entirety.
