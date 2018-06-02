@@ -1,15 +1,14 @@
 package org.web3j.sample;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
+import java.math.BigInteger;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
-import org.web3j.protocol.admin.methods.response.NewAccountIdentifier;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -63,24 +62,23 @@ public class Application {
         Geth geth = Geth.build(new HttpService(node));
         log.info("Connection to node successful");
 
-        // Let us create a new account for you
-        log.info("Lets create a new account");
-        log.info("Choose a password for your account:");
+        // We then need to create a new account
+        log.info("Choose a password");
         String password = s.nextLine();
-        log.info("Your password is {}", password);
-        NewAccountIdentifier newAccountIdentifier = geth.personalNewAccount(password).send();
-        log.info("New account {} created", newAccountIdentifier.getAccountId());
-
-        // We then need to load our Ethereum wallet file
-        log.info("Please enter you wallet file location");
-        String walletFileLocation = s.nextLine();
+        log.info("Please enter your mnemonic, WRITE IT DOWN SOMEWHERE SAFE TO ACCESS THIS ACCOUNT IN THE FUTURE");
+        String mnemonic = s.nextLine();
 
         Credentials credentials =
-                WalletUtils.loadCredentials(
-                        password,
-                        walletFileLocation);
+                WalletUtils.loadBip39Credentials(password, mnemonic);
 
-        // Now lets deploy a smart contract - Remeber to enter YOUR name
+        // We need to fund your wallet to be able to deploy contracts
+        log.info("Fund your wallet at: {}", credentials.getAddress());
+        DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
+        while (geth.ethGetBalance(credentials.getAddress(), dbp).send().getBalance().equals(BigInteger.ZERO)) {
+            TimeUnit.SECONDS.sleep(3);
+        }
+
+        // Now lets deploy a smart contract
         log.info("Let's deploy your smart contract");
         log.info("What is your name?");
         String name = s.nextLine();
@@ -90,6 +88,11 @@ public class Application {
                 ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
+        // We need to fund your contract to be able to call functions in other contracts
+        log.info("Fund your contract at: {}", contract.getContractAddress());
+        while (geth.ethGetBalance(contract.getContractAddress(), dbp).send().getBalance().equals(BigInteger.ZERO)) {
+            TimeUnit.SECONDS.sleep(3);
+        }
 
         // Events enable us to log specific events happening during the execution of our smart
         // contract to the blockchain. Index events cannot be logged in their entirety.
@@ -99,7 +102,6 @@ public class Application {
         // We register an observable for the event in our contract to be able to detect when someone sends us a message
         // Observables are useful to handle streams of data asynchronously
         // For more info, refer to http://reactivex.io/documentation/observable.html
-        DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
         contract.messageReceivedEventObservable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
             log.info(event.message + " from " + event.name);
