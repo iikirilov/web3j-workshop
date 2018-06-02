@@ -7,7 +7,7 @@ contract Mortal {
     address owner;
 
     /* this function is executed at initialization and sets the owner of the contract */
-    function Mortal() public { owner = msg.sender; }
+    constructor() public { owner = msg.sender; }
 
     /* Function to recover the funds on the contract */
     function kill() public { if (msg.sender == owner) selfdestruct(owner); }
@@ -18,7 +18,7 @@ contract Greeter is Mortal {
     string name;
 
     /* this runs when the contract is executed */
-    function Greeter(string _name) public {
+    constructor(string _name) public {
         name = _name;
     }
 
@@ -34,5 +34,5 @@ contract Greeter is Mortal {
     }
 
     /* example event in solidity */
-    event MessageReceived(address indexed sender, string indexed name, string message);
+    event MessageReceived(address indexed sender, string name, string message);
 }
