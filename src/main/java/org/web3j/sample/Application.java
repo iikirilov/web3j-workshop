@@ -115,7 +115,6 @@ public class Application {
 
         contract.messageReceivedEventFlowable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
-            log.info(event.name + " says " + event.message + "");
             log.info("{} says: {} in {}", event.name, event.message, event.log.getTransactionHash());
 
         }, error -> {
