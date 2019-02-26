@@ -1,22 +1,31 @@
 #!/usr/bin/env bash
 
+set -e
+set -o pipefail
+
+baseDir="../../../../src/main/resources/solidity/greeter"
+greeterDir="../${baseDir}/build"
+
 targets="
-greeter/Greeter
+Greeter
 "
 
 for target in ${targets}; do
-    dirName=$(dirname $target)
-    fileName=$(basename $target)
+    dirName=$(dirname "${target}")
+    fileName=$(basename "${target}")
 
-    cd $dirName
-    echo "Compiling Solidity files in ${dirName}:"
-    solc --bin --abi --optimize --overwrite ${fileName}.sol -o build/
+    cd $baseDir
+    echo "Compiling Solidity file ${target}.sol"
+
+    solc --abi --bin --metadata --optimize --overwrite \
+            --allow-paths "$(pwd)" \
+            ${dirName}/${fileName}.sol -o ${dirName}/build/
     echo "Complete"
 
-    echo "Generating web3j bindings"
+    echo "Generating contract bindings"
     web3j solidity generate \
-        build/${fileName}.bin \
-        build/${fileName}.abi \
+        -a=${greeterDir}/${fileName}.abi \
+        -b=${greeterDir}/${fileName}.bin \
         -p org.web3j.sample.contracts.generated \
         -o ../../../java/ > /dev/null
     echo "Complete"

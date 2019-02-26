@@ -1,35 +1,39 @@
-pragma solidity ^0.4.2;
-
-// Modified Greeter contract. Based on example at https://www.ethereum.org/greeter.
+pragma solidity >=0.4.22 <0.6.0;
 
 contract Mortal {
-    /* Define variable owner of the type address*/
+    /* Define variable owner of the type address */
     address owner;
 
-    /* this function is executed at initialization and sets the owner of the contract */
+    /* This constructor is executed at initialization and sets the owner of the contract */
     constructor() public { owner = msg.sender; }
 
     /* Function to recover the funds on the contract */
-    function kill() public { if (msg.sender == owner) selfdestruct(owner); }
+    function kill() public { if (msg.sender == owner) selfdestruct(msg.sender); }
 }
 
 contract Greeter is Mortal {
 
+    /* Define contract name of the type string */
     string name;
 
     /* this runs when the contract is executed */
-    constructor(string _name) public {
+    constructor(string memory _name) public {
         name = _name;
     }
 
+    /* Main function */
+    function getContractName() public view returns (string memory) {
+        return name;
+    }
+
     /* send function */
-    function greet(address _recipient, string _message) public {
+    function greet(address _recipient, string memory _message) public {
         Greeter g = Greeter(_recipient);
         g.receive(name, _message);
     }
 
     /* receive function */
-    function receive(string _name, string _message) external {
+    function receive(string calldata _name, string calldata _message) external {
         emit MessageReceived(msg.sender, _name, _message);
     }
 

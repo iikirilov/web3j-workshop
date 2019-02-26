@@ -29,7 +29,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Auto generated code.
  * <p><strong>Do not modify!</strong>
  * <p>Please use the <a href="https://docs.web3j.io/command_line.html">web3j command line tools</a>,
- * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the
+ * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
  * <a href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
  * <p>Generated with web3j version 4.0.1.
@@ -45,7 +45,7 @@ public class Greeter extends Contract {
 
     public static final String FUNC_GETCONTRACTNAME = "getContractName";
 
-    public static final Event MESSAGERECEIVED_EVENT = new Event("MessageReceived",
+    public static final Event MESSAGERECEIVED_EVENT = new Event("MessageReceived", 
             Arrays.<TypeReference<?>>asList(new TypeReference<Address>(true) {}, new TypeReference<Utf8String>() {}, new TypeReference<Utf8String>() {}));
     ;
 
@@ -69,33 +69,33 @@ public class Greeter extends Contract {
 
     public RemoteCall<TransactionReceipt> greet(String _recipient, String _message) {
         final Function function = new Function(
-                FUNC_GREET,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(_recipient),
-                new org.web3j.abi.datatypes.Utf8String(_message)),
+                FUNC_GREET, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(_recipient), 
+                new org.web3j.abi.datatypes.Utf8String(_message)), 
                 Collections.<TypeReference<?>>emptyList());
         return executeRemoteCallTransaction(function);
     }
 
     public RemoteCall<TransactionReceipt> kill() {
         final Function function = new Function(
-                FUNC_KILL,
-                Arrays.<Type>asList(),
+                FUNC_KILL, 
+                Arrays.<Type>asList(), 
                 Collections.<TypeReference<?>>emptyList());
         return executeRemoteCallTransaction(function);
     }
 
     public RemoteCall<TransactionReceipt> receive(String _name, String _message) {
         final Function function = new Function(
-                FUNC_RECEIVE,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(_name),
-                new org.web3j.abi.datatypes.Utf8String(_message)),
+                FUNC_RECEIVE, 
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(_name), 
+                new org.web3j.abi.datatypes.Utf8String(_message)), 
                 Collections.<TypeReference<?>>emptyList());
         return executeRemoteCallTransaction(function);
     }
 
     public RemoteCall<String> getContractName() {
-        final Function function = new Function(FUNC_GETCONTRACTNAME,
-                Arrays.<Type>asList(),
+        final Function function = new Function(FUNC_GETCONTRACTNAME, 
+                Arrays.<Type>asList(), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<Utf8String>() {}));
         return executeRemoteCallSingleValueReturn(function, String.class);
     }
