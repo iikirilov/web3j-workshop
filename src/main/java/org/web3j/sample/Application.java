@@ -101,6 +101,8 @@ public class Application {
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
 
+        // TODO: how can we load an already existing smart contract?
+
         // Events enable us to log specific events happening during the execution of our smart
         // contract to the blockchain. Index events cannot be logged in their entirety.
         // For Strings and arrays, the hash of values is provided, not the original value.
@@ -113,7 +115,9 @@ public class Application {
 
         contract.messageReceivedEventFlowable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
-            log.info(event.name + " says " + event.message);
+            log.info(event.name + " says " + event.message + "");
+            log.info("{} says: {} in {}", event.name, event.message, event.log.getTransactionHash());
+
         }, error -> {
             // onError() method implementation
             log.error("Message received event observable error {}", error);
@@ -130,7 +134,7 @@ public class Application {
         String message = s.nextLine();
         log.info("Sending your message, it may take a while");
         TransactionReceipt tr = contract.greet(matesContract, message).send();
-        log.info(name + " says: " + tr);
+        log.info("{} says: {} in {}", name, message, tr.getTransactionHash());
 
         // Currently you can only send one message per run -
         // TODO: Develop so you can actually "chat" using your contract,

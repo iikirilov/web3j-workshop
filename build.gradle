@@ -1,7 +1,10 @@
-group 'org.web3j'
-version '0.0.1'
+plugins {
+    id 'java'
+    id 'org.web3j' version '4.1.2'
+}
 
-apply plugin: 'java'
+group 'org.web3j'
+version '0.1.1'
 
 sourceCompatibility = 1.8
 
@@ -9,17 +12,19 @@ repositories {
     mavenCentral()
 }
 
+web3j {
+    generatedPackageName = 'org.web3j.sample.contracts.generated'
+    excludedContracts = ['Mortal']
+}
+
 ext {
-    web3jVersion = '4.1.1'
     logbackVersion = '1.2.3'
     junitVersion = '4.12'
 }
 
 dependencies {
     compile "ch.qos.logback:logback-core:$logbackVersion",
-            "ch.qos.logback:logback-classic:$logbackVersion"
-    compile('org.web3j:quorum:0.9.0')
-    compile('org.web3j:codegen:3.5.0')
-    compile('org.web3j:core:4.0.1')
+            "ch.qos.logback:logback-classic:$logbackVersion",
+            "org.web3j:core:4.1.1"
     testCompile "junit:junit:$junitVersion"
 }
