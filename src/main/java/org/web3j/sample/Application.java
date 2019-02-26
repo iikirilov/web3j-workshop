@@ -14,6 +14,7 @@ import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.sample.contracts.generated.Greeter;
 import org.web3j.tx.gas.DefaultGasProvider;
@@ -112,7 +113,7 @@ public class Application {
 
         contract.messageReceivedEventFlowable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
-            log.info(event.message + " from " + event.name);
+            log.info(event.name + " says " + event.message);
         }, error -> {
             // onError() method implementation
             log.error("Message received event observable error {}", error);
@@ -128,8 +129,8 @@ public class Application {
         log.info("What do you want to send them?");
         String message = s.nextLine();
         log.info("Sending your message, it may take a while");
-//        String tr = contract.greet().send();
-//        log.info("Your message was sent in {}", tr);
+        TransactionReceipt tr = contract.greet(matesContract, message).send();
+        log.info(name + " says: " + tr);
 
         // Currently you can only send one message per run -
         // TODO: Develop so you can actually "chat" using your contract,
