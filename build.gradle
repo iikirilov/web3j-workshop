@@ -10,14 +10,16 @@ repositories {
 }
 
 ext {
-    web3jVersion = '3.3.1'
+    web3jVersion = '4.1.1'
     logbackVersion = '1.2.3'
     junitVersion = '4.12'
 }
 
 dependencies {
-    compile "org.web3j:geth:$web3jVersion",
-            "ch.qos.logback:logback-core:$logbackVersion",
+    compile "ch.qos.logback:logback-core:$logbackVersion",
             "ch.qos.logback:logback-classic:$logbackVersion"
+    compile('org.web3j:quorum:0.9.0')
+    compile('org.web3j:codegen:3.5.0')
+    compile('org.web3j:core:4.0.1')
     testCompile "junit:junit:$junitVersion"
 }

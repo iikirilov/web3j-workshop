@@ -9,14 +9,14 @@ import org.slf4j.LoggerFactory;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
+import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.protocol.geth.Geth;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.sample.contracts.generated.Greeter;
 import org.web3j.tx.Contract;
 import org.web3j.tx.ManagedTransaction;
+import org.web3j.tx.gas.DefaultGasProvider;
 
 /**
  * A simple web3j application that demonstrates a number of core features of web3j:
@@ -59,7 +59,7 @@ public class Application {
         // Note: if using web3j Android, use Web3jFactory.build(...
         log.info("Enter your node url");
         String node = s.nextLine();
-        Geth geth = Geth.build(new HttpService(node));
+        Web3j geth = Web3j.build(new HttpService(node));
         log.info("Connection to node successful");
 
         // We then need to create a new account
@@ -73,6 +73,11 @@ public class Application {
 
         // We need to fund your wallet to be able to deploy contracts
         log.info("Fund your wallet at: {}", credentials.getAddress());
+        DefaultGasProvider gasProvider = new DefaultGasProvider();
+//        Web3j geth = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/fd932842b76e4f3f879e833690220675"));
+//        Credentials credentials = WalletUtils.loadCredentials("Seba-r13",
+//                "/Users/sebastianraba/Desktop/work/web3j-workshop/src/test/keystore.json");
+
         DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
         while (geth.ethGetBalance(credentials.getAddress(), dbp).send().getBalance().equals(BigInteger.ZERO)) {
             TimeUnit.SECONDS.sleep(3);
@@ -85,7 +90,7 @@ public class Application {
         log.info("Deploying your contract, this may take a minute");
         Greeter contract = Greeter.deploy(
                 geth, credentials,
-                ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,
+                gasProvider,
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
 
@@ -97,7 +102,9 @@ public class Application {
         // We register an observable for the event in our contract to be able to detect when someone sends us a message
         // Observables are useful to handle streams of data asynchronously
         // For more info, refer to http://reactivex.io/documentation/observable.html
-        contract.messageReceivedEventObservable(dbp,dbp).subscribe(event -> {
+
+
+        contract.messageReceivedEventFlowable(dbp,dbp).subscribe(event -> {
             // onNext() method implementation
             log.info(event.message + " from " + event.name);
         }, error -> {
@@ -115,8 +122,8 @@ public class Application {
         log.info("What do you want to send them?");
         String message = s.nextLine();
         log.info("Sending your message, it may take a while");
-        TransactionReceipt tr = contract.greet(matesContract, message).send();
-        log.info("Your message was sent in {}", tr.getTransactionHash());
+//        String tr = contract.greet().send();
+//        log.info("Your message was sent in {}", tr);
 
         // Currently you can only send one message per run -
         // TODO: Develop so you can actually "chat" using your contract,
