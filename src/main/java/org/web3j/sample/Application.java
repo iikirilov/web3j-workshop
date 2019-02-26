@@ -4,8 +4,10 @@ import java.math.BigInteger;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
@@ -14,8 +16,6 @@ import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.sample.contracts.generated.Greeter;
-import org.web3j.tx.Contract;
-import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 /**
@@ -55,15 +55,22 @@ public class Application {
 
     private void run() throws Exception {
 
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .authenticator((route, response) -> {
+                    String credential = okhttp3.Credentials.basic("epirus", "epirus-rocks");
+                    return response.request().newBuilder().header("Authorization", credential).build();
+                })
+                .build();
+
+
         // We start by creating a new web3j instance to connect to remote nodes on the network.
         // Note: if using web3j Android, use Web3jFactory.build(...
-        log.info("Enter your node url");
-        String node = s.nextLine();
-        Web3j geth = Web3j.build(new HttpService(node));
+        Web3j geth = Web3j.build(new HttpService(
+                "https://rinkby-geth.clients.epirus.blk.io", client, false));
         log.info("Connection to node successful");
 
         // We then need to create a new account
-        log.info("Choose a password");
+        log.info("Write your password - It can be empty");
         String password = s.nextLine();
         log.info("Please enter your mnemonic, WRITE IT DOWN SOMEWHERE SAFE TO ACCESS THIS ACCOUNT IN THE FUTURE");
         String mnemonic = s.nextLine();
@@ -73,15 +80,14 @@ public class Application {
 
         // We need to fund your wallet to be able to deploy contracts
         log.info("Fund your wallet at: {}", credentials.getAddress());
-        DefaultGasProvider gasProvider = new DefaultGasProvider();
-//        Web3j geth = Web3j.build(new HttpService("https://rinkeby.infura.io/v3/fd932842b76e4f3f879e833690220675"));
-//        Credentials credentials = WalletUtils.loadCredentials("Seba-r13",
-//                "/Users/sebastianraba/Desktop/work/web3j-workshop/src/test/keystore.json");
 
         DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
-        while (geth.ethGetBalance(credentials.getAddress(), dbp).send().getBalance().equals(BigInteger.ZERO)) {
+
+        do {
+            final BigInteger balance = geth.ethGetBalance(credentials.getAddress(), dbp).send().getBalance();
+            log.info("Your balance is: {}", balance);
             TimeUnit.SECONDS.sleep(3);
-        }
+        } while (geth.ethGetBalance(credentials.getAddress(), dbp).send().getBalance().equals(BigInteger.ZERO));
 
         // Now lets deploy a smart contract
         log.info("Let's deploy your smart contract");
@@ -90,7 +96,7 @@ public class Application {
         log.info("Deploying your contract, this may take a minute");
         Greeter contract = Greeter.deploy(
                 geth, credentials,
-                gasProvider,
+                new DefaultGasProvider(),
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
 
