@@ -58,22 +58,22 @@ public class Application {
         // We start by creating a new web3j instance to connect to remote nodes on the network.
         // Note: if using web3j Android, use Web3jFactory.build(...
         log.info("Enter your node url");
-        String node = s.nextLine();
-        Geth geth = Geth.build(new HttpService(node));
+        final String node = s.nextLine();
+        final Geth geth = Geth.build(new HttpService(node));
         log.info("Connection to node successful");
 
-        // We then need to create a new account
-        log.info("Choose a password");
-        String password = s.nextLine();
-        log.info("Please enter your mnemonic, WRITE IT DOWN SOMEWHERE SAFE TO ACCESS THIS ACCOUNT IN THE FUTURE");
-        String mnemonic = s.nextLine();
+        // We then need to load an account
+        log.info("Please enter your wallet file path");
+        final String walletFilePath = s.nextLine();
+        log.info("Enter password");
+        final String password = s.nextLine();
 
-        Credentials credentials =
-                WalletUtils.loadBip39Credentials(password, mnemonic);
+        final Credentials credentials =
+                WalletUtils.loadCredentials(password, walletFilePath);
 
         // We need to fund your wallet to be able to deploy contracts
         log.info("Fund your wallet at: {}", credentials.getAddress());
-        DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
+        final DefaultBlockParameter dbp = DefaultBlockParameterName.LATEST;
         while (geth.ethGetBalance(credentials.getAddress(), dbp).send().getBalance().equals(BigInteger.ZERO)) {
             TimeUnit.SECONDS.sleep(3);
         }
@@ -81,9 +81,9 @@ public class Application {
         // Now lets deploy a smart contract
         log.info("Let's deploy your smart contract");
         log.info("What is your name?");
-        String name = s.nextLine();
+        final String name = s.nextLine();
         log.info("Deploying your contract, this may take a minute");
-        Greeter contract = Greeter.deploy(
+        final Greeter contract = Greeter.deploy(
                 geth, credentials,
                 ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,
                 name).send();
@@ -111,11 +111,11 @@ public class Application {
 
         // Now lets send a message to our mate
         log.info("Enter your mates' contract address");
-        String matesContract = s.nextLine();
+        final String matesContract = s.nextLine();
         log.info("What do you want to send them?");
-        String message = s.nextLine();
+        final String message = s.nextLine();
         log.info("Sending your message, it may take a while");
-        TransactionReceipt tr = contract.greet(matesContract, message).send();
+        final TransactionReceipt tr = contract.greet(matesContract, message).send();
         log.info("Your message was sent in {}", tr.getTransactionHash());
 
         // Currently you can only send one message per run -
