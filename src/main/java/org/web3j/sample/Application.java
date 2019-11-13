@@ -1,5 +1,7 @@
 package org.web3j.sample;
 
+import io.reactivex.disposables.Disposable;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -15,8 +17,9 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.geth.Geth;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.sample.contracts.generated.Greeter;
-import org.web3j.tx.Contract;
-import org.web3j.tx.ManagedTransaction;
+import org.web3j.tx.gas.ContractGasProvider;
+import org.web3j.tx.gas.StaticGasProvider;
+import org.web3j.utils.Convert;
 
 /**
  * A simple web3j application that demonstrates a number of core features of web3j:
@@ -48,18 +51,27 @@ public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
     private Scanner s = new Scanner(System.in);
+    private ContractGasProvider gasProvider =
+            new StaticGasProvider(
+                    Convert.toWei("40", Convert.Unit.GWEI).toBigInteger(),
+                    BigInteger.valueOf(1_000_000L));
 
     public static void main(String[] args) throws Exception {
         new Application().run();
     }
 
     private void run() throws Exception {
-
         // We start by creating a new web3j instance to connect to remote nodes on the network.
         // Note: if using web3j Android, use Web3jFactory.build(...
         log.info("Enter your node url");
         final String node = s.nextLine();
         final Geth geth = Geth.build(new HttpService(node));
+        try {
+            geth.web3ClientVersion().send();
+        } catch (final IOException e) {
+            log.error("Failed to connect to node");
+            throw e;
+        }
         log.info("Connection to node successful");
 
         // We then need to load an account
@@ -85,7 +97,7 @@ public class Application {
         log.info("Deploying your contract, this may take a minute");
         final Greeter contract = Greeter.deploy(
                 geth, credentials,
-                ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,
+                gasProvider,
                 name).send();
         log.info("Contract deployed at {}", contract.getContractAddress());
 
@@ -97,12 +109,12 @@ public class Application {
         // We register an observable for the event in our contract to be able to detect when someone sends us a message
         // Observables are useful to handle streams of data asynchronously
         // For more info, refer to http://reactivex.io/documentation/observable.html
-        contract.messageReceivedEventObservable(dbp,dbp).subscribe(event -> {
+        final Disposable disposable = contract.messageReceivedEventFlowable(dbp, dbp).subscribe(event -> {
             // onNext() method implementation
             log.info(event.message + " from " + event.name);
         }, error -> {
             // onError() method implementation
-            log.error("Message received event observable error {}", error);
+            log.error("Message received event flowable error", error);
         }, () -> {
             // onComplete() method implementation
             // used to clean up after the final onNext() call
